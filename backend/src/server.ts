@@ -1,14 +1,17 @@
 import express from 'express';
+import helmet from 'helmet';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 dotenv.config();
 import usersRouter from './routes/users';
 import exercisesRouter from './routes/exercises';
+// file deepcode ignore UseCsurfForExpress: <this app does not required user authentication>
 
 const app = express();
 const port = process.env.PORT ?? 3000;
 
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
