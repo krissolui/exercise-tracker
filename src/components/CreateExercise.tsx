@@ -1,22 +1,33 @@
 import { useEffect, useState } from 'react';
 import { createExercise, listUsers } from '../api/exerciseTracker';
 
+type Form = {
+	username: string;
+	description: string;
+	duration: number;
+	date: Date;
+};
+
 const CreateExercise = () => {
 	const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
+	const [form, setForm] = useState<Form>({
+		username: '',
+		description: '',
+		duration: 0,
+		date: new Date(Date.now() - timezoneOffset),
+	});
 	const [usernames, setUsernames] = useState<string[]>([]);
-	const [username, setUsername] = useState<string>('');
-	const [description, setDescription] = useState<string>('');
-	const [duration, setDuration] = useState<number>(0);
-	const [date, setDate] = useState<Date>(
-		new Date(Date.now() - timezoneOffset)
-	);
 	const [errorMsg, setErrorMsg] = useState<string>('');
+
+	const { username, description, duration, date } = form;
 
 	useEffect(() => {
 		const getUsers = async () => {
 			try {
 				const users = await listUsers();
 				setUsernames(users.map((user) => user.username));
+				if (users.length > 0)
+					setForm({ ...form, username: users[0].username });
 			} catch (ex) {
 				return;
 			}
@@ -27,22 +38,22 @@ const CreateExercise = () => {
 	const handleOnChangeUsername = (
 		e: React.ChangeEvent<HTMLSelectElement>
 	) => {
-		setUsername(e.target.value);
+		setForm({ ...form, username: e.target.value });
 	};
 
 	const handleOnChangeDescription = (
 		e: React.FormEvent<HTMLInputElement>
 	) => {
-		setDescription(e.currentTarget.value);
+		setForm({ ...form, description: e.currentTarget.value });
 	};
 
 	const handleOnChangeDuration = (e: React.FormEvent<HTMLInputElement>) => {
 		const value = Number(e.currentTarget.value);
-		if (value >= 0) setDuration(value);
+		if (value >= 0) setForm({ ...form, duration: value });
 	};
 
 	const handleOnChangeDate = (e: React.FormEvent<HTMLInputElement>) => {
-		setDate(new Date(e.currentTarget.value));
+		setForm({ ...form, date: new Date(e.currentTarget.value) });
 	};
 
 	const onSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -55,6 +66,11 @@ const CreateExercise = () => {
 
 		if (description === '') {
 			setErrorMsg('Description must not be empty!');
+			return;
+		}
+
+		if (duration === 0) {
+			setErrorMsg('Duration must not greater than 0!');
 			return;
 		}
 
@@ -71,10 +87,12 @@ const CreateExercise = () => {
 				date: date.toISOString(),
 			});
 			setErrorMsg('');
-			setUsername('');
-			setDescription('');
-			setDuration(0);
-			setDate(new Date(Date.now() - timezoneOffset));
+			setForm({
+				username: usernames[0] ?? '',
+				description: '',
+				duration: 0,
+				date: new Date(Date.now() - timezoneOffset),
+			});
 		} catch (ex) {
 			setErrorMsg(ex.error);
 			return;
@@ -86,6 +104,7 @@ const CreateExercise = () => {
 			<form>
 				<div className="sm:col-span-4">
 					<label
+						key="username"
 						form="username"
 						className="block text-sm font-medium leading-6 text-gray-900"
 					>
@@ -109,6 +128,7 @@ const CreateExercise = () => {
 					</div>
 
 					<label
+						key="description"
 						form="description"
 						className="block text-sm font-medium leading-6 text-gray-900"
 					>
